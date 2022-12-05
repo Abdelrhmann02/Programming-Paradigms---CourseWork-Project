@@ -26,7 +26,10 @@ object MyApp extends App {
 
   // *******************************************************************************************************************
   // Menu functionality
-  val actionMap = Map[Int, () => Boolean](1 -> handleOne, 2 -> handleTwo)
+  val actionMap = Map[Int, () => Boolean](1 -> handleOne
+                                                ,2 -> handleTwo
+                                                ,3 -> handleThree
+                                                ,7 -> handleSeven)
 
   var opt = 0
   do {
@@ -61,11 +64,21 @@ object MyApp extends App {
 
   // handlers for menu options
   def handleOne(): Boolean = {
-    menuShowCurrentStocks(currentPrice) // calls function mnuShowPoints, which invokes function currentPoints
+    menuShowCurrentStocks(currentPrice)
     true
   }
 
   def handleTwo(): Boolean = {
+    menuShowHighLow(HighLow)
+    true
+  }
+
+  def handleThree(): Boolean = {
+    menuShowMedian(Median)
+    true
+  }
+
+  def handleSeven(): Boolean = {
     println("selected quit") // returns false so loop terminates
     false
   }
@@ -78,7 +91,21 @@ object MyApp extends App {
   // invokes the relevant operation function and displays the results
 
   def menuShowCurrentStocks(f: () => Map[String, Int]) = {
-    f() foreach { case (x, y) => println(s"$x: $y") }
+    f() foreach { case (stock, price) => println(s"$stock: $price") }
+  }
+
+  def menuShowHighLow(f: (Int,Int) => Map[String, List[Int]]) = {
+    //The user is allowed to enter the period of time to be searched
+    print("From day: ")
+    val start_day = readLine().toInt
+    print("To day: ")
+    val end_day = readLine().toInt
+    val result = f(start_day,end_day)
+    result.foreach(stock => println(s"${stock._1} -> Low: ${stock._2(0)}, High: ${stock._2(1)}"))
+  }
+
+  def menuShowMedian(f:() => Map[String,Int]) = {
+    f() foreach { case (stock,median) => println(s"$stock: $median")}
   }
 
 
@@ -89,13 +116,19 @@ object MyApp extends App {
   // the results to be displayed - does not interact with user
 
   def currentPrice(): Map[String, Int] = {
-    var Current = Map.empty[String, Int]
-    for((stock,value) <- mapdata){
-      var recent = value.last
-      Current += (stock -> recent)
-    }
-    Current
+    for ((stock,values) <- mapdata)
+      yield(stock,values.last)
   }
 
+  def HighLow(start: Int,end: Int): Map[String,List[Int]] = {
+    mapdata.map { case (stock,values) =>
+      var period = values.slice(start-1,end)
+      stock -> List(period.min,period.max)
+    }
+  }
 
+  def Median(): Map[String,Int] = {
+    var Current = Map.empty[String, Int]
+    Current
+  }
 }
