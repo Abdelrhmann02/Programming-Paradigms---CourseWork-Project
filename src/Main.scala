@@ -31,6 +31,7 @@ object MyApp extends App {
     , 3 -> handleThree
     , 4 -> handleFour
     , 5 -> handleFive
+    , 6 -> handleSix
     , 7 -> handleSeven)
 
   var opt = 0
@@ -90,6 +91,11 @@ object MyApp extends App {
     true
   }
 
+  def handleSix() : Boolean = {
+    menuPortfolio(Portfolio)
+    true
+  }
+
   def handleSeven(): Boolean = {
     println("selected quit") // returns false so loop terminates
     false
@@ -122,7 +128,7 @@ object MyApp extends App {
 
   def menuShowRise(f: () => String) = {
     val result = f()
-    println(s"The stock $result has risen most over the last week")
+    println(s"The stock $result has risen most over the last week.")
   }
 
   def menuCompareAverage(f:(String,String) =>  Map[String,Double]) = {
@@ -131,6 +137,22 @@ object MyApp extends App {
     print("Second Stock: ")
     val SecondStock = readLine()
     f(FirstStock,SecondStock) foreach { case (stock, mean) => println(s"$stock -> Mean: $mean") }
+  }
+
+  def menuPortfolio(f:(Map[String,Int] => Int)) = {
+    var portfolio = Map.empty[String,Int]
+    println("How many stocks do you own?")
+    val number = readLine().toInt
+    for( i <- 1 to number) {
+      print("Enter Stock Name: ")
+      val stock = readLine()
+      print("Enter Shares: ")
+      val shares = readLine().toInt
+      portfolio += (stock -> shares)
+    }
+    val result = f(portfolio)
+    println(s"The total value of the portfolio is $result.")
+
   }
 
 
@@ -180,5 +202,14 @@ object MyApp extends App {
     var AverageFirst = first.view.mapValues(v => (v.sum.toDouble/v.size)).toMap
     var AverageSecond = second.view.mapValues(v => (v.sum.toDouble/v.size)).toMap
     AverageFirst++AverageSecond
+  }
+
+  def Portfolio (portfolio: Map[String,Int]): Int = {
+    var CurrentPrices = currentPrice()
+    var value = 0
+    portfolio.foreach { case (stock,shares) =>
+      value+= CurrentPrices(stock) * shares
+    }
+    value
   }
 }
