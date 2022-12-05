@@ -12,7 +12,7 @@ object MyApp extends App {
     try {
       for (line <- Source.fromFile(filename).getLines()) { // for each line
         val splitline = line.split(",").map(_.trim).toList // split line at , and convert to List
-          mapBuffer = mapBuffer ++ Map(splitline.head -> splitline.tail.map(_.toInt))
+        mapBuffer = mapBuffer ++ Map(splitline.head -> splitline.tail.map(_.toInt))
       }
     } catch {
       case ex: Exception => println("Sorry, an exception happened.")
@@ -27,9 +27,11 @@ object MyApp extends App {
   // *******************************************************************************************************************
   // Menu functionality
   val actionMap = Map[Int, () => Boolean](1 -> handleOne
-                                                ,2 -> handleTwo
-                                                ,3 -> handleThree
-                                                ,7 -> handleSeven)
+    , 2 -> handleTwo
+    , 3 -> handleThree
+    , 4 -> handleFour
+    , 5 -> handleFive
+    , 7 -> handleSeven)
 
   var opt = 0
   do {
@@ -78,6 +80,16 @@ object MyApp extends App {
     true
   }
 
+  def handleFour(): Boolean = {
+    menuShowRise(Rise)
+    true
+  }
+
+  def handleFive(): Boolean = {
+    menuCompareAverage(Average)
+    true
+  }
+
   def handleSeven(): Boolean = {
     println("selected quit") // returns false so loop terminates
     false
@@ -94,18 +106,31 @@ object MyApp extends App {
     f() foreach { case (stock, price) => println(s"$stock: $price") }
   }
 
-  def menuShowHighLow(f: (Int,Int) => Map[String, List[Int]]) = {
+  def menuShowHighLow(f: (Int, Int) => Map[String, List[Int]]) = {
     //The user is allowed to enter the period of time to be searched
     print("From day: ")
     val start_day = readLine().toInt
     print("To day: ")
     val end_day = readLine().toInt
-    val result = f(start_day,end_day)
+    val result = f(start_day, end_day)
     result.foreach(stock => println(s"${stock._1} -> Low: ${stock._2(0)}, High: ${stock._2(1)}"))
   }
 
-  def menuShowMedian(f:() => Map[String,Double]) = {
-    f() foreach { case (stock,median) => println(s"$stock: $median")}
+  def menuShowMedian(f: () => Map[String, Double]) = {
+    f() foreach { case (stock, median) => println(s"$stock: $median") }
+  }
+
+  def menuShowRise(f: () => String) = {
+    val result = f()
+    println(s"The stock $result has risen most over the last week")
+  }
+
+  def menuCompareAverage(f:(String,String) =>  Map[String,Double]) = {
+    print("First Stock: ")
+    val FirstStock = readLine()
+    print("Second Stock: ")
+    val SecondStock = readLine()
+    f(FirstStock,SecondStock) foreach { case (stock, mean) => println(s"$stock -> Mean: $mean") }
   }
 
 
@@ -116,23 +141,44 @@ object MyApp extends App {
   // the results to be displayed - does not interact with user
 
   def currentPrice(): Map[String, Int] = {
-    for ((stock,values) <- mapdata)
-      yield(stock,values.last)
+    for ((stock, values) <- mapdata)
+      yield (stock, values.last)
   }
 
-  def HighLow(start: Int,end: Int): Map[String,List[Int]] = {
-    mapdata.map { case (stock,values) =>
-      var period = values.slice(start-1,end)
-      stock -> List(period.min,period.max)
+  def HighLow(start: Int, end: Int): Map[String, List[Int]] = {
+    mapdata.map { case (stock, values) =>
+      var period = values.slice(start - 1, end)
+      stock -> List(period.min, period.max)
     }
   }
 
-  def Median(): Map[String,Double] = {
+  def Median(): Map[String, Double] = {
     mapdata.map { case (stock, values) =>
       val sortedValues = values.sorted
-      val(up,down) = sortedValues.splitAt(sortedValues.size/2)
-      val median = (up.last+ down.head)/2.0
+      val (up, down) = sortedValues.splitAt(sortedValues.size / 2)
+      val median = (up.last + down.head) / 2.0
       stock -> median
     }
+  }
+
+  def Rise(): String = {
+    var LargestRise = 0
+    var LargestStock = ""
+    mapdata.foreach { case (stock, values) =>
+      var currentRise = values.last - values(values.size - 7)
+      if (currentRise > LargestRise) {
+        LargestRise = currentRise
+        LargestStock = stock
+      }
+    }
+    LargestStock
+  }
+
+  def Average(FirstStock: String, SecondStock: String): Map[String,Double] = {
+    var first = mapdata.filter(_._1 == FirstStock)
+    var second = mapdata.filter(_._1 == SecondStock)
+    var AverageFirst = first.view.mapValues(v => (v.sum.toDouble/v.size)).toMap
+    var AverageSecond = second.view.mapValues(v => (v.sum.toDouble/v.size)).toMap
+    AverageFirst++AverageSecond
   }
 }
