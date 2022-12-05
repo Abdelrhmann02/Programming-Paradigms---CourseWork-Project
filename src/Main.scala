@@ -104,7 +104,7 @@ object MyApp extends App {
     result.foreach(stock => println(s"${stock._1} -> Low: ${stock._2(0)}, High: ${stock._2(1)}"))
   }
 
-  def menuShowMedian(f:() => Map[String,Int]) = {
+  def menuShowMedian(f:() => Map[String,Double]) = {
     f() foreach { case (stock,median) => println(s"$stock: $median")}
   }
 
@@ -127,8 +127,12 @@ object MyApp extends App {
     }
   }
 
-  def Median(): Map[String,Int] = {
-    var Current = Map.empty[String, Int]
-    Current
+  def Median(): Map[String,Double] = {
+    mapdata.map { case (stock, values) =>
+      val sortedValues = values.sorted
+      val(up,down) = sortedValues.splitAt(sortedValues.size/2)
+      val median = (up.last+ down.head)/2.0
+      stock -> median
+    }
   }
 }
