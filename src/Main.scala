@@ -21,8 +21,6 @@ object MyApp extends App {
   }
 
   val mapdata = readFile("data.txt")
-  println(mapdata)
-
 
   // *******************************************************************************************************************
   // Menu functionality
@@ -101,8 +99,6 @@ object MyApp extends App {
     false
   }
 
-
-
   // *******************************************************************************************************************
   // FUNCTIONS THAT INVOKE ACTION AND INTERACT WITH USER
   // each of these functions accepts user input if required for an operation,
@@ -127,35 +123,51 @@ object MyApp extends App {
   }
 
   def menuShowRise(f: () => String) = {
-    val result = f()
-    println(s"The stock $result has risen most over the last week.")
+    var result = f()
+    println(s"The stock $result had the largest rise over the last week.")
   }
 
   def menuCompareAverage(f:(String,String) =>  Map[String,Double]) = {
+    var flag = false
     print("First Stock: ")
     val FirstStock = readLine()
     print("Second Stock: ")
     val SecondStock = readLine()
-    f(FirstStock,SecondStock) foreach { case (stock, mean) => println(s"$stock -> Mean: $mean") }
+    mapdata.get(FirstStock) match {
+      case Some(f) =>
+        mapdata.get(SecondStock) match {
+          case Some(f) => flag = true
+          case None => println("The Second stock is not recognized")
+        }
+      case None => println("The first stock is not recognized")
+    }
+    if (flag) {
+      f(FirstStock,SecondStock) foreach { case (stock, mean) => println(s"$stock -> Mean: $mean") }
+    }
   }
 
   def menuPortfolio(f:(Map[String,Int] => Int)) = {
     var portfolio = Map.empty[String,Int]
     println("How many stocks do you own?")
-    val number = readLine().toInt
-    for( i <- 1 to number) {
+    var number = readLine().toInt
+    var i = 1
+    while(i<=number){
       print("Enter Stock Name: ")
       val stock = readLine()
       print("Enter Shares: ")
       val shares = readLine().toInt
-      portfolio += (stock -> shares)
-    }
+      mapdata.get(stock) match {
+        case Some(f) =>
+          portfolio += (stock -> shares)
+          i+=1
+        case None =>
+          println("That stock is not recognized, please enter another one")
+          i -= 1
+        }
+      }
     val result = f(portfolio)
     println(s"The total value of the portfolio is $result.")
-
   }
-
-
 
   // *******************************************************************************************************************
   // OPERATION FUNCTIONS
@@ -184,16 +196,11 @@ object MyApp extends App {
   }
 
   def Rise(): String = {
-    var LargestRise = 0
-    var LargestStock = ""
-    mapdata.foreach { case (stock, values) =>
-      var currentRise = values.last - values(values.size - 7)
-      if (currentRise > LargestRise) {
-        LargestRise = currentRise
-        LargestStock = stock
-      }
+    var Rise = mapdata.map { case (stock, values) =>
+      var rise = values.last - values(values.size - 7)
+      stock -> rise
     }
-    LargestStock
+    Rise.maxBy(_._2)._1
   }
 
   def Average(FirstStock: String, SecondStock: String): Map[String,Double] = {
