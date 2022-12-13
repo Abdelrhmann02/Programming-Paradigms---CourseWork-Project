@@ -2,7 +2,7 @@ import scala.io.Source
 import scala.io.StdIn.readInt
 import scala.io.StdIn.readLine
 import scala.collection.immutable.ListMap
-
+import util.control.Breaks._
 object MyApp extends App {
 
   // *******************************************************************************************************************
@@ -20,8 +20,8 @@ object MyApp extends App {
     mapBuffer
   }
 
-  val mapdata = readFile("data.txt")
-
+  var mapdata = readFile("data.txt")
+  mapdata = ListMap(mapdata.toSeq.sortBy(_._1):_*) //to sort the map by key values
   // *******************************************************************************************************************
   // Menu functionality
   val actionMap = Map[Int, () => Boolean](1 -> handleOne
@@ -108,14 +108,8 @@ object MyApp extends App {
     f() foreach { case (stock, price) => println(s"$stock: $price") }
   }
 
-  def menuShowHighLow(f: (Int, Int) => Map[String, List[Int]]) = {
-    //The user is allowed to enter the period of time to be searched
-    print("From day: ")
-    val start_day = readLine().toInt
-    print("To day: ")
-    val end_day = readLine().toInt
-    val result = f(start_day, end_day)
-    result.foreach(stock => println(s"${stock._1} -> Low: ${stock._2(0)}, High: ${stock._2(1)}"))
+  def menuShowHighLow(f: () => Map[String, List[Int]]) = {
+    f() foreach(stock => println(s"${stock._1} -> Low: ${stock._2(0)}, High: ${stock._2(1)}"))
   }
 
   def menuShowMedian(f: () => Map[String, Double]) = {
@@ -133,7 +127,7 @@ object MyApp extends App {
     val FirstStock = readLine()
     print("Second Stock: ")
     val SecondStock = readLine()
-    mapdata.get(FirstStock) match {
+    mapdata.get(FirstStock) match { //Check if the stock symbols is correct
       case Some(f) =>
         mapdata.get(SecondStock) match {
           case Some(f) => flag = true
@@ -142,7 +136,7 @@ object MyApp extends App {
       case None => println("The first stock is not recognized")
     }
     if (flag) {
-      f(FirstStock,SecondStock) foreach { case (stock, mean) => println(s"$stock -> Mean: $mean") }
+      f(FirstStock,SecondStock) foreach { case (stock, mean) => println(s"$stock -> Average: $mean") }
     }
   }
 
@@ -150,23 +144,23 @@ object MyApp extends App {
     var portfolio = Map.empty[String,Int]
     println("How many stocks do you own?")
     var number = readLine().toInt
-    var i = 1
-    while(i<=number){
+    var i = 0
+    while(i<number){
       print("Enter Stock Name: ")
       val stock = readLine()
       print("Enter Shares: ")
       val shares = readLine().toInt
-      mapdata.get(stock) match {
+      mapdata.get(stock) match { //Check if the stock symbols is correct
         case Some(f) =>
           portfolio += (stock -> shares)
           i+=1
         case None =>
-          println("That stock is not recognized, please enter another one")
-          i -= 1
+          println("That stock is not recognized,please enter another one")
         }
       }
     val result = f(portfolio)
     println(s"The total value of the portfolio is $result.")
+
   }
 
   // *******************************************************************************************************************
@@ -179,10 +173,9 @@ object MyApp extends App {
       yield (stock, values.last)
   }
 
-  def HighLow(start: Int, end: Int): Map[String, List[Int]] = {
+  def HighLow(): Map[String, List[Int]] = {
     mapdata.map { case (stock, values) =>
-      var period = values.slice(start - 1, end)
-      stock -> List(period.min, period.max)
+      stock -> List(values.min, values.max)
     }
   }
 
