@@ -206,10 +206,8 @@ object MyApp extends App {
 
   def Portfolio (portfolio: Map[String,Int]): Int = {
     var CurrentPrices = currentPrice()
-    var value = 0
-    portfolio.foreach { case (stock,shares) =>
-      value+= CurrentPrices(stock) * shares
+    portfolio.foldLeft(0) {case (total, (stock,shares)) =>
+      total + CurrentPrices(stock) * shares
     }
-    value
   }
 }
