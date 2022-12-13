@@ -172,8 +172,7 @@ object MyApp extends App {
   // the results to be displayed - does not interact with user
 
   def currentPrice(): Map[String, Int] = {
-    for ((stock, values) <- mapdata)
-      yield (stock, values.last)
+    ListMap(mapdata.mapValues(_.last).toSeq.sortBy(_._1):_*) // to sort the output
   }
 
   def HighLow(): Map[String, List[Int]] = {
