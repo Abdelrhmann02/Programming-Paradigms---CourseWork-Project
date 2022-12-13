@@ -121,7 +121,7 @@ object MyApp extends App {
     println(s"The stock $result had the largest rise over the last week.")
   }
 
-  def menuCompareAverage(f:(String,String) =>  Map[String,Double]) = {
+  def menuCompareAverage(f:(String,String) =>  (Double,Double)) = {
     var flag = false
     print("First Stock: ")
     val FirstStock = readLine()
@@ -136,7 +136,10 @@ object MyApp extends App {
       case None => println("The first stock is not recognized")
     }
     if (flag) {
-      f(FirstStock,SecondStock) foreach { case (stock, mean) => println(s"$stock -> Average: $mean") }
+      val(average1,average2) = Average(FirstStock,SecondStock);
+      println(s"$FirstStock -> Average: $average1")
+      println(s"$SecondStock -> Average: $average2")
+      //f(FirstStock,SecondStock) foreach { case (stock, mean) => println(s"$stock -> Average: $mean") }
     }
   }
 
@@ -196,12 +199,9 @@ object MyApp extends App {
     Rise.maxBy(_._2)._1
   }
 
-  def Average(FirstStock: String, SecondStock: String): Map[String,Double] = {
-    var first = mapdata.filter(_._1 == FirstStock)
-    var second = mapdata.filter(_._1 == SecondStock)
-    var AverageFirst = first.view.mapValues(v => (v.sum.toDouble/v.size)).toMap
-    var AverageSecond = second.view.mapValues(v => (v.sum.toDouble/v.size)).toMap
-    AverageFirst++AverageSecond
+  def Average(FirstStock: String, SecondStock: String):(Double,Double) = {
+    val average = mapdata.mapValues(values => values.sum.toDouble / values.length)
+    (average(FirstStock),average(SecondStock))
   }
 
   def Portfolio (portfolio: Map[String,Int]): Int = {
